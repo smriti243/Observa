@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+.Typewriter__cursor {
+    font-size: 1.5em;
+    font-weight: 300;
+    animation: blink 0.1s infinite;
+  }
+  
+  /* @keyframes blink {
+    50% { opacity: 0; }
+  }
+   */
+  

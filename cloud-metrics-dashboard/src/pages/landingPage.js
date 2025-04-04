@@ -4,6 +4,7 @@ import { ArrowRight, Cloud, BarChart2, Lock, Zap } from "lucide-react";
 import { Button } from "../components/ui/button";
 import LoadingAnimation from "../components/loadingAnimation";
 import "../output.css";
+import "../index.css";
 import awsLogo from "../assets/download.png";
 import azureLogo from "../assets/azure.png";
 import gcpLogo from "../assets/gcp.png";
@@ -40,11 +41,8 @@ const features = [
 ];
 
 export default function LandingPage() {
-
-
   return (
- 
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white overflow-y-auto overflow-x-hidden custom-scrollbar">
       <section className="container mx-auto px-4 py-20 text-center">
         <h1 className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
           Welcome to Observa

@@ -29,4 +29,23 @@
     height:45px;
     margin: 5px;
     border-radius: 10px;
+    padding-left: 5px ;
+    padding-right: 5px;
 }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px; /* Make it thinner */
+    margin-left: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent; /* Remove white background */
+    margin: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4a5568; /* Match input field color */
+    border-radius: 4px;
+    margin: 10px;
+  }
+  

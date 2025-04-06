@@ -75,9 +75,12 @@ function Dashboard() {
             }));
 
             const avgValue =
-              datapoints.reduce((acc, dp) => acc + dp.Average, 0) /
-              datapoints.length;
-            const borderColor = getColorByValue(metricName, avgValue);
+  datapoints.reduce((acc, dp) => acc + dp.Average, 0) /
+  datapoints.length;
+const recentValue = datapoints[datapoints.length - 1]?.Average || avgValue;
+const hybridScore = 0.4 * avgValue + 0.6 * recentValue;
+const borderColor = getColorByValue(metricName, hybridScore);
+
 
             return (
               <div

@@ -1,17 +1,6 @@
 import { useState } from "react";
 import "./awsInputPage.css";
 import { useNavigate } from "react-router-dom";
-// import {
-//   Datepicker,
-//   Input,
-//   Page,
-//   setOptions /* localeImport */,
-// } from "mobiscroll-react";
-
-// setOptions({
-//   // localeJs,
-//   // themeJs
-// });
 
 const metricCategories = {
   "System Performance": [
@@ -77,10 +66,11 @@ function AwsInputPage() {
     else if (timeRange === "last_24_hours")
       startTime.setHours(startTime.getHours() - 24);
 
-    const response = await fetch("http://localhost:5000/fetch-metrics", {
+    const response = await fetch("http://localhost:5000/api/fetch-metrics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        provider: "aws",
         roleArn,
         instanceId,
         metrics: selectedMetrics,

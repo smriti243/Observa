@@ -1,28 +1,32 @@
+import React from "react";
 import { useLocation } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 function Dashboard() {
-    const location = useLocation();
-    const metricsData = location.state?.metricsData || {};
+  const location = useLocation();
+  const metricsData = location.state?.metricsData;
 
-    return (
-        <div>
-            <h2>Performance Metrics Dashboard</h2>
-
-            {Object.keys(metricsData).map((metricName) => (
-                <div key={metricName}>
-                    <h3>{metricName}</h3>
-                    <LineChart width={600} height={300} data={metricsData[metricName]}>
-                        <XAxis dataKey="Timestamp" />
-                        <YAxis />
-                        <Tooltip />
-                        <CartesianGrid stroke="#ccc" />
-                        <Line type="monotone" dataKey="Average" stroke="#8884d8" />
-                    </LineChart>
-                </div>
-            ))}
-        </div>
-    );
+  return (
+    <div className="dashboard">
+      <h1>AWS Metrics Dashboard</h1>
+      {!metricsData ? (
+        <p>No data available.</p>
+      ) : (
+        Object.entries(metricsData).map(([metricName, datapoints]) => (
+          <div key={metricName} className="metric-card">
+            <h3>{metricName}</h3>
+            <ul>
+              {datapoints.map((point, index) => (
+                <li key={index}>
+                  {new Date(point.Timestamp).toLocaleString()} — Avg:{" "}
+                  {point.Average.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      )}
+    </div>
+  );
 }
 
 export default Dashboard;

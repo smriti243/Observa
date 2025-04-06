@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import emailjs from "emailjs-com";
 import {
   LineChart,
   Line,
@@ -11,10 +12,18 @@ import {
   Legend,
 } from "recharts";
 
+
+
 function Dashboard() {
   const location = useLocation();
   const metricsData = location.state?.metricsData;
   const [darkMode, setDarkMode] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({});
+  const [alertSent, setAlertSent] = useState({});
+
+
+
 
   const getColorByValue = (metricName, value) => {
     const thresholds = {
@@ -25,7 +34,7 @@ function Dashboard() {
       DiskReadOps: [200, 500],
       DiskWriteOps: [200, 500],
       RequestCount: [100, 1000],
-      Latency: [100, 300], // in ms
+      Latency: [100, 300],
       "4xxErrorRate": [1, 5],
       "5xxErrorRate": [0.5, 2],
       ThrottledRequests: [10, 50],
@@ -47,6 +56,9 @@ function Dashboard() {
   };
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
+  const toggleSettings = () => setShowSettings((prev) => !prev);
+
+
 
   return (
     <div
@@ -56,13 +68,60 @@ function Dashboard() {
     >
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">AWS Metrics Dashboard</h1>
+        <div className="flex gap-4">
+          <button
+            onClick={toggleSettings}
+            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-400 transition"
+          >
+            ⚙ Alert Settings
+          </button>
+          <button
+            onClick={toggleDarkMode}
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 transition"
+          >
+            {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+          </button>
+        </div>
+      </div>
+
+      {/* ⚙ Alert Settings Section */}
+      {showSettings && (
+  <div
+    className={`mb-6 p-4 rounded ${
+      darkMode ? "bg-gray-800" : "bg-yellow-100"
+    } border border-yellow-500`}
+  >
+    <h2 className="text-xl font-semibold mb-3 text-yellow-900 dark:text-yellow-300">
+      🔔 Custom Alert Thresholds
+    </h2>
+    {Object.keys(metricsData || {}).map((metric) => (
+      <div key={metric} className="mb-3 flex gap-4 items-center">
+        <label className="w-48 text-sm font-medium">{metric}</label>
+        <input
+          type="number"
+          placeholder="Set threshold"
+          value={alertConfig[metric] || ""}
+          onChange={(e) =>
+            setAlertConfig((prev) => ({
+              ...prev,
+              [metric]: Number(e.target.value),
+            }))
+          }
+          className="border px-3 py-1 rounded w-32 text-black"
+        />
         <button
-          onClick={toggleDarkMode}
-          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500 transition"
+          onClick={() =>
+            alert(`Threshold for ${metric} set to ${alertConfig[metric]}`)
+          }
+          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-500 transition"
         >
-          {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+          Set
         </button>
       </div>
+    ))}
+  </div>
+)}
+
 
       {!metricsData ? (
         <p>No data available.</p>
@@ -75,12 +134,10 @@ function Dashboard() {
             }));
 
             const avgValue =
-  datapoints.reduce((acc, dp) => acc + dp.Average, 0) /
-  datapoints.length;
-const recentValue = datapoints[datapoints.length - 1]?.Average || avgValue;
-const hybridScore = 0.4 * avgValue + 0.6 * recentValue;
-const borderColor = getColorByValue(metricName, hybridScore);
+              datapoints.reduce((acc, dp) => acc + dp.Average, 0) /
+              datapoints.length;
 
+            const borderColor = getColorByValue(metricName, avgValue);
 
             return (
               <div

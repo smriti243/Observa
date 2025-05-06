@@ -136,12 +136,15 @@ function Dashboard() {
         const response = await fetch(
           `http://localhost:5000/api/metrics/forecast?metric=${metricName}`
         );
+
         const result = await response.json();
         const forecast = result.forecast || [];
         const formatted = forecast.map((entry) => ({
           Timestamp: new Date(entry.timestamp).toLocaleTimeString(),
           Forecast: entry.value,
+          PredictedValue: entry.predictedValue,
         }));
+        console.log("Formatted Forecast Data:", formatted);
         setForecastData((prev) => ({ ...prev, [metricName]: formatted }));
         setShowForecast((prev) => ({ ...prev, [metricName]: true }));
       } catch (error) {
@@ -236,7 +239,7 @@ function Dashboard() {
           {Object.entries(metricsData).map(([metricName, datapoints]) => {
             const formattedData = datapoints.map((dp) => ({
               ...dp,
-              Timestamp: new Date(dp.Timestamp).toLocaleTimeString(),
+              Timestamp: new Date(dp.Timestamp).toLocaleTimeString(), // Adjusting timestamp format
             }));
 
             const avgValue =
@@ -278,6 +281,17 @@ function Dashboard() {
                       strokeWidth={2}
                       dot={false}
                     />
+                    {/* If predictedValue is available, render a second line */}
+                    {showForecast[metricName] &&
+                      forecastData[metricName][0]?.PredictedValue && (
+                        <Line
+                          type="monotone"
+                          dataKey="PredictedValue"
+                          stroke="#82ca9d"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      )}
                   </LineChart>
                 </ResponsiveContainer>
 
@@ -287,29 +301,6 @@ function Dashboard() {
                 >
                   {showForecast[metricName] ? "Current" : "Forecast"}
                 </button>
-
-                {/* {forecastData[metricName] && (
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-2">
-                      Forecast Chart
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={forecastData[metricName]}>
-                        <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-                        <XAxis dataKey="Timestamp" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="Forecast"
-                          stroke="#3b82f6"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )} */}
               </div>
             );
           })}

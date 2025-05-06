@@ -19,6 +19,7 @@ function Dashboard() {
   const [showSettings, setShowSettings] = useState(false);
   const [alertConfig, setAlertConfig] = useState({});
   const [alertSent, setAlertSent] = useState({});
+  const [forecastData, setForecastData] = useState({});
 
   const getColorByValue = (metricName, value) => {
     const thresholds = {
@@ -42,11 +43,7 @@ function Dashboard() {
       ActiveUsers: [1000, 5000],
       FeatureUsage: [100, 1000],
     };
-
-
-
     const [green, yellow] = thresholds[metricName] || [50, 80];
-
     if (value < green) return "border-green-500";
     if (value < yellow) return "border-yellow-400";
     return "border-red-500";
@@ -78,11 +75,9 @@ function Dashboard() {
   };
 
   const sendEmailAlert = (metricName, value, threshold) => {
-
-    const recipientEmail = alertConfig.email || "500096396@stu.upes.ac.in"; // fallback
-
+    const recipientEmail = alertConfig.email || "500096396@stu.upes.ac.in";
     const templateParams = {
-      to_email: recipientEmail, // or any recipient name
+      to_email: recipientEmail,
       metric: metricName,
       value: value.toFixed(2),
       threshold: threshold,
@@ -122,14 +117,29 @@ function Dashboard() {
       if (avgValue > threshold && !alertSent[metricName]) {
         sendEmailAlert(metricName, avgValue, threshold);
         setAlertSent((prev) => ({ ...prev, [metricName]: true }));
-
-        // Optional: reset alert after some time
         setTimeout(() => {
           setAlertSent((prev) => ({ ...prev, [metricName]: false }));
-        }, 10 * 60 * 1000); // reset after 10 minutes
+        }, 10 * 60 * 1000);
       }
     });
   }, [metricsData, alertConfig]);
+
+  const handleForecastClick = async (metricName) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/metrics/forecast?metric=${metricName}`
+      );
+      const result = await response.json();
+      const forecast = result.forecast || [];
+      const formatted = forecast.map((entry) => ({
+        Timestamp: entry.timestamp,
+        Forecast: entry.value,
+      }));
+      setForecastData((prev) => ({ ...prev, [metricName]: formatted }));
+    } catch (error) {
+      console.error("Forecast fetch failed:", error);
+    }
+  };
 
   return (
     <div
@@ -154,8 +164,7 @@ function Dashboard() {
           </button>
         </div>
       </div>
-  
-      {/* ⚙ Alert Settings Section */}
+
       {showSettings && (
         <div
           className={`mb-6 p-4 rounded ${
@@ -166,20 +175,20 @@ function Dashboard() {
             🔔 Custom Alert Thresholds
           </h2>
           <div className="mb-6">
-  <label className="block mb-2 text-sm font-medium">Alert Email</label>
-  <input
-    type="email"
-    placeholder="Enter email for alerts"
-    value={alertConfig.email || ""}
-    onChange={(e) =>
-      setAlertConfig((prev) => ({
-        ...prev,
-        email: e.target.value,
-      }))
-    }
-    className="border px-3 py-2 rounded w-96 text-black"
-  />
-</div>
+            <label className="block mb-2 text-sm font-medium">Alert Email</label>
+            <input
+              type="email"
+              placeholder="Enter email for alerts"
+              value={alertConfig.email || ""}
+              onChange={(e) =>
+                setAlertConfig((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
+              className="border px-3 py-2 rounded w-96 text-black"
+            />
+          </div>
 
           {Object.keys(metricsData || {}).map((metric) => (
             <div key={metric} className="mb-3 flex gap-4 items-center">
@@ -208,9 +217,6 @@ function Dashboard() {
           ))}
         </div>
       )}
-
-  
-
 
       {!metricsData ? (
         <p>No data available.</p>
@@ -260,6 +266,33 @@ function Dashboard() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                <button
+                  onClick={() => handleForecastClick(metricName)}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Forecast
+                </button>
+
+                {forecastData[metricName] && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-semibold mb-2">Forecast Chart</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <LineChart data={forecastData[metricName]}>
+                        <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+                        <XAxis dataKey="Timestamp" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="Forecast"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             );
           })}

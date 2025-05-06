@@ -5,13 +5,11 @@ const {
 const Metric = require("../models/metricModel");
 
 const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics }) => {
-    // CloudWatch client will automatically use environment variables:
-    // AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
     const cloudWatchClient = new CloudWatchClient({});
 
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const period = 300; // 5 minutes
+    const period = 300;
 
     const allGroupedData = {};
 
@@ -20,10 +18,7 @@ const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics })
             Namespace: "AWS/EC2",
             MetricName: metricName,
             Dimensions: [
-                {
-                    Name: "InstanceId",
-                    Value: instanceId,
-                },
+                { Name: "InstanceId", Value: instanceId },
             ],
             StartTime: start,
             EndTime: end,
@@ -38,9 +33,14 @@ const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics })
             metricName,
             timestamp: dp.Timestamp,
             average: dp.Average,
+            instanceId, // <- added
         })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        await Metric.insertMany(formattedData);
+        try {
+            await Metric.insertMany(formattedData); // <- wrapped in try-catch
+        } catch (err) {
+            console.error("Failed to save metrics to MongoDB:", err);
+        }
 
         allGroupedData[metricName] = formattedData.map(({ timestamp, average }) => ({
             Timestamp: timestamp,

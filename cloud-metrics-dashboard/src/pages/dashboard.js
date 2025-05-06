@@ -20,6 +20,7 @@ function Dashboard() {
   const [alertConfig, setAlertConfig] = useState({});
   const [alertSent, setAlertSent] = useState({});
   const [forecastData, setForecastData] = useState({});
+  const [showForecast, setShowForecast] = useState({});
 
   const getColorByValue = (metricName, value) => {
     const thresholds = {
@@ -125,19 +126,27 @@ function Dashboard() {
   }, [metricsData, alertConfig]);
 
   const handleForecastClick = async (metricName) => {
-    try {
-      const response = await fetch(
-        `http://localhost:5000/api/metrics/forecast?metric=${metricName}`
-      );
-      const result = await response.json();
-      const forecast = result.forecast || [];
-      const formatted = forecast.map((entry) => ({
-        Timestamp: entry.timestamp,
-        Forecast: entry.value,
-      }));
-      setForecastData((prev) => ({ ...prev, [metricName]: formatted }));
-    } catch (error) {
-      console.error("Forecast fetch failed:", error);
+    const isForecastVisible = showForecast[metricName];
+    if (isForecastVisible) {
+      // Toggle back to current
+      setShowForecast((prev) => ({ ...prev, [metricName]: false }));
+    } else {
+      // Fetch and show forecast
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/metrics/forecast?metric=${metricName}`
+        );
+        const result = await response.json();
+        const forecast = result.forecast || [];
+        const formatted = forecast.map((entry) => ({
+          Timestamp: new Date(entry.timestamp).toLocaleTimeString(),
+          Forecast: entry.value,
+        }));
+        setForecastData((prev) => ({ ...prev, [metricName]: formatted }));
+        setShowForecast((prev) => ({ ...prev, [metricName]: true }));
+      } catch (error) {
+        console.error("Forecast fetch failed:", error);
+      }
     }
   };
 
@@ -175,7 +184,9 @@ function Dashboard() {
             🔔 Custom Alert Thresholds
           </h2>
           <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium">Alert Email</label>
+            <label className="block mb-2 text-sm font-medium">
+              Alert Email
+            </label>
             <input
               type="email"
               placeholder="Enter email for alerts"
@@ -243,7 +254,13 @@ function Dashboard() {
               >
                 <h2 className="text-xl font-semibold mb-4">{metricName}</h2>
                 <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={formattedData}>
+                  <LineChart
+                    data={
+                      showForecast[metricName]
+                        ? forecastData[metricName] || []
+                        : formattedData
+                    }
+                  >
                     <CartesianGrid
                       stroke={darkMode ? "#555" : "#ccc"}
                       strokeDasharray="5 5"
@@ -254,28 +271,28 @@ function Dashboard() {
                     <Legend />
                     <Line
                       type="monotone"
-                      dataKey="Average"
-                      stroke={
-                        borderColor === "border-green-500"
-                          ? "#22c55e"
-                          : borderColor === "border-yellow-400"
-                          ? "#eab308"
-                          : "#ef4444"
+                      dataKey={
+                        showForecast[metricName] ? "Forecast" : "Average"
                       }
+                      stroke="#8884d8"
                       strokeWidth={2}
+                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
+
                 <button
                   onClick={() => handleForecastClick(metricName)}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="mt-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 transition"
                 >
-                  Forecast
+                  {showForecast[metricName] ? "Current" : "Forecast"}
                 </button>
 
-                {forecastData[metricName] && (
+                {/* {forecastData[metricName] && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-2">Forecast Chart</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      Forecast Chart
+                    </h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={forecastData[metricName]}>
                         <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
@@ -292,7 +309,7 @@ function Dashboard() {
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
-                )}
+                )} */}
               </div>
             );
           })}

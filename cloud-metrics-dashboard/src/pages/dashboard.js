@@ -78,8 +78,11 @@ function Dashboard() {
   };
 
   const sendEmailAlert = (metricName, value, threshold) => {
+
+    const recipientEmail = alertConfig.email || "500096396@stu.upes.ac.in"; // fallback
+
     const templateParams = {
-      to_name: "Admin", // or any recipient name
+      to_email: recipientEmail, // or any recipient name
       metric: metricName,
       value: value.toFixed(2),
       threshold: threshold,
@@ -91,7 +94,7 @@ function Dashboard() {
         "service_4wwevlm",
         "template_vg2q6et",
         templateParams,
-        "ya-YIchO5WvzoHKN-l"
+        "a-YIchO5WvzoHKN-l"
       )
       .then(
         (response) => {
@@ -151,7 +154,7 @@ function Dashboard() {
           </button>
         </div>
       </div>
-
+  
       {/* ⚙ Alert Settings Section */}
       {showSettings && (
         <div
@@ -162,6 +165,22 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-3 text-yellow-900 dark:text-yellow-300">
             🔔 Custom Alert Thresholds
           </h2>
+          <div className="mb-6">
+  <label className="block mb-2 text-sm font-medium">Alert Email</label>
+  <input
+    type="email"
+    placeholder="Enter email for alerts"
+    value={alertConfig.email || ""}
+    onChange={(e) =>
+      setAlertConfig((prev) => ({
+        ...prev,
+        email: e.target.value,
+      }))
+    }
+    className="border px-3 py-2 rounded w-96 text-black"
+  />
+</div>
+
           {Object.keys(metricsData || {}).map((metric) => (
             <div key={metric} className="mb-3 flex gap-4 items-center">
               <label className="w-48 text-sm font-medium">{metric}</label>
@@ -189,6 +208,9 @@ function Dashboard() {
           ))}
         </div>
       )}
+
+  
+
 
       {!metricsData ? (
         <p>No data available.</p>

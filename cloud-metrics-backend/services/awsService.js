@@ -1,25 +1,28 @@
-const {
-    CloudWatchClient,
-    GetMetricStatisticsCommand,
-} = require("@aws-sdk/client-cloudwatch");
+const { CloudWatchClient, GetMetricStatisticsCommand } = require("@aws-sdk/client-cloudwatch");
 const Metric = require("../models/metricModel");
 
-const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics }) => {
+const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics, windowSize }) => {
     const cloudWatchClient = new CloudWatchClient({});
-
     const start = new Date(startTime);
     const end = new Date(endTime);
     const period = 300;
-
     const allGroupedData = {};
+
+    const slidingWindowAvg = (dataPoints, windowSize) => {
+        let averages = [];
+        for (let i = windowSize - 1; i < dataPoints.length; i++) {
+            const window = dataPoints.slice(i - windowSize + 1, i + 1);
+            const avg = window.reduce((sum, dp) => sum + dp.Average, 0) / window.length;
+            averages.push({ ...dataPoints[i], Average: avg });
+        }
+        return averages;
+    };
 
     for (const metricName of metrics) {
         const params = {
             Namespace: "AWS/EC2",
             MetricName: metricName,
-            Dimensions: [
-                { Name: "InstanceId", Value: instanceId },
-            ],
+            Dimensions: [{ Name: "InstanceId", Value: instanceId }],
             StartTime: start,
             EndTime: end,
             Period: period,
@@ -32,19 +35,21 @@ const getCloudWatchMetrics = async ({ instanceId, startTime, endTime, metrics })
         const formattedData = response.Datapoints.map((dp) => ({
             metricName,
             timestamp: dp.Timestamp,
-            average: dp.Average,
-            instanceId, // <- added
+            Average: dp.Average,
+            instanceId,
         })).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+        const slidingData = slidingWindowAvg(formattedData, windowSize);
+
         try {
-            await Metric.insertMany(formattedData); // <- wrapped in try-catch
+            await Metric.insertMany(slidingData);
         } catch (err) {
             console.error("Failed to save metrics to MongoDB:", err);
         }
 
-        allGroupedData[metricName] = formattedData.map(({ timestamp, average }) => ({
+        allGroupedData[metricName] = slidingData.map(({ timestamp, Average }) => ({
             Timestamp: timestamp,
-            Average: average,
+            Average,
         }));
     }
 

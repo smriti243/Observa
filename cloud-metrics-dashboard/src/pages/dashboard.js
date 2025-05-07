@@ -131,7 +131,7 @@ function Dashboard() {
       // Toggle back to current
       setShowForecast((prev) => ({ ...prev, [metricName]: false }));
     } else {
-      // Fetch and show forecast
+      // Fetch and show forecast (which will be handled by backend for sliding window)
       try {
         const response = await fetch(
           `http://localhost:5000/api/metrics/forecast?metric=${metricName}`
@@ -144,6 +144,7 @@ function Dashboard() {
           Forecast: entry.value,
           PredictedValue: entry.predictedValue,
         }));
+
         console.log("Formatted Forecast Data:", formatted);
         setForecastData((prev) => ({ ...prev, [metricName]: formatted }));
         setShowForecast((prev) => ({ ...prev, [metricName]: true }));
@@ -151,7 +152,8 @@ function Dashboard() {
         console.error("Forecast fetch failed:", error);
       }
     }
-  };
+};
+
 
   return (
     <div

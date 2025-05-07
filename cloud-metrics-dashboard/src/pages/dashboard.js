@@ -162,7 +162,7 @@ function Dashboard() {
       } min-h-screen p-6 transition-colors`}
     >
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">AWS Metrics Dashboard</h1>
+        <h1 className="text-3xl font-bold">Observa</h1>
         <div className="flex gap-4">
           <button
             onClick={toggleSettings}
@@ -233,6 +233,18 @@ function Dashboard() {
           ))}
         </div>
       )}
+
+      <div className="flex gap-2 mt-2 mb-4">
+  {["1h", "3h", "6h", "12h", "24h"].map((label) => (
+    <div
+      key={label}
+      className="px-6 py-3 text-blue-600 border border-blue-600 rounded-lg bg-dashboard-bg hover:bg-blue-50 transition"
+    >
+      {label}
+    </div>
+  ))}
+</div>
+
 
       {!metricsData ? (
         <p>No data available.</p>
